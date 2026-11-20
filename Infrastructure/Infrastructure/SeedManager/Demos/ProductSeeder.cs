@@ -1,6 +1,7 @@
 ﻿using Application.Common.Repositories;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos
@@ -12,13 +13,15 @@ namespace Infrastructure.SeedManager.Demos
         private readonly ICommandRepository<UnitMeasure> _unitMeasureRepository;
         private readonly NumberSequenceService _numberSequenceService;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly DataContext _context;
 
         public ProductSeeder(
             ICommandRepository<Product> productRepository,
             ICommandRepository<ProductGroup> productGroupRepository,
             ICommandRepository<UnitMeasure> unitMeasureRepository,
             NumberSequenceService numberSequenceService,
-            IUnitOfWork unitOfWork
+            IUnitOfWork unitOfWork,
+            DataContext context
         )
         {
             _productRepository = productRepository;
@@ -26,10 +29,14 @@ namespace Infrastructure.SeedManager.Demos
             _unitMeasureRepository = unitMeasureRepository;
             _numberSequenceService = numberSequenceService;
             _unitOfWork = unitOfWork;
+            _context = context;
         }
 
         public async Task GenerateDataAsync()
         {
+            var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+            var companyId = defaultCompany?.Id ?? "";
+
             var productGroups = await _productGroupRepository.GetQuery().ToListAsync();
             var measures = (await _unitMeasureRepository.GetQuery().Where(x => x.Name == "unit").ToListAsync()).Select(x => x.Id).ToArray();
 
@@ -83,6 +90,7 @@ namespace Infrastructure.SeedManager.Demos
                 product.Number = _numberSequenceService.GenerateNumber(nameof(Product), "", "ART");
                 product.UnitMeasureId = measures[0];
                 product.Physical ??= true;
+                product.CompanyId = companyId;
 
                 await _productRepository.CreateAsync(product);
             }
@@ -90,8 +98,9 @@ namespace Infrastructure.SeedManager.Demos
             await _unitOfWork.SaveAsync();
         }
 
-        private static T GetRandomValue<T>(T[] array, Random random)
+        private static T? GetRandomValue<T>(T[]? array, Random random)
         {
+            if (array == null || array.Length == 0) return default;
             return array[random.Next(array.Length)];
         }
     }

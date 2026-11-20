@@ -2,7 +2,7 @@
 
 namespace Domain.Entities;
 
-public class VendorContact : BaseEntity
+public class VendorContact : TenantBaseEntity
 {
     public string? Name { get; set; }
     public string? Number { get; set; }
@@ -12,4 +12,6 @@ public class VendorContact : BaseEntity
     public string? Description { get; set; }
     public string? VendorId { get; set; }
     public Vendor? Vendor { get; set; }
+
+    public Company? Company { get; set; }
 }

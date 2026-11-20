@@ -1,5 +1,7 @@
 ﻿using Application.Common.Repositories;
 using Domain.Entities;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Systems;
 
@@ -7,16 +9,22 @@ public class CompanySeeder
 {
     private readonly ICommandRepository<Company> _repository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
     public CompanySeeder(
         ICommandRepository<Company> repository,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
         )
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
     public async Task GenerateDataAsync()
     {
+        var existing = await _context.Company.FirstOrDefaultAsync();
+        if (existing != null) return;
+
         var entity = new Company
         {
             CreatedAtUtc = DateTime.UtcNow,

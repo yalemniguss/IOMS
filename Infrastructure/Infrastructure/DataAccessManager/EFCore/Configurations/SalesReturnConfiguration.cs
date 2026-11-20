@@ -11,6 +11,13 @@ public class SalesReturnConfiguration : BaseEntityConfiguration<SalesReturn>
     {
         base.Configure(builder);
 
+        builder.Property(x => x.CompanyId).IsRequired();
+        builder.HasIndex(x => x.CompanyId);
+        builder.HasOne(x => x.Company)
+               .WithMany()
+               .HasForeignKey(x => x.CompanyId)
+               .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.Restrict);
+
         builder.Property(x => x.Number).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.ReturnDate).IsRequired(false);
         builder.Property(x => x.Status).IsRequired(false);

@@ -1,6 +1,7 @@
 ﻿using Application.Common.Repositories;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -11,22 +12,28 @@ public class VendorContactSeeder
     private readonly ICommandRepository<Vendor> _vendorRepository;
     private readonly NumberSequenceService _numberSequenceService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public VendorContactSeeder(
         ICommandRepository<VendorContact> vendorContactRepository,
         ICommandRepository<Vendor> vendorRepository,
         NumberSequenceService numberSequenceService,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
     )
     {
         _vendorContactRepository = vendorContactRepository;
         _vendorRepository = vendorRepository;
         _numberSequenceService = numberSequenceService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var firstNames = new string[]
         {
             "Adam", "Sarah", "Michael", "Emily", "David", "Jessica",
@@ -71,7 +78,8 @@ public class VendorContactSeeder
                     VendorId = vendorId,
                     JobTitle = GetRandomString(jobTitles, random),
                     EmailAddress = $"{firstName.ToLower()}.{lastName.ToLower()}@gmail.com",
-                    PhoneNumber = $"+1-{random.Next(100, 999)}-{random.Next(100, 999)}-{random.Next(1000, 9999)}"
+                    PhoneNumber = $"+1-{random.Next(100, 999)}-{random.Next(100, 999)}-{random.Next(1000, 9999)}",
+                    CompanyId = companyId
                 });
             }
         }
@@ -84,8 +92,9 @@ public class VendorContactSeeder
         await _unitOfWork.SaveAsync();
     }
 
-    private static string GetRandomString(string[] array, Random random)
+    private static string? GetRandomString(string[]? array, Random random)
     {
+        if (array == null || array.Length == 0) return null;
         return array[random.Next(array.Length)];
     }
 }

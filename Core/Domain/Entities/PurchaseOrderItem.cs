@@ -2,7 +2,7 @@
 
 namespace Domain.Entities;
 
-public class PurchaseOrderItem : BaseEntity
+public class PurchaseOrderItem : TenantBaseEntity
 {
     public string? PurchaseOrderId { get; set; }
     public PurchaseOrder? PurchaseOrder { get; set; }
@@ -12,4 +12,6 @@ public class PurchaseOrderItem : BaseEntity
     public double? UnitPrice { get; set; } = 0;
     public double? Quantity { get; set; } = 1;
     public double? Total { get; set; } = 0;
+
+    public Company? Company { get; set; }
 }

@@ -3,7 +3,7 @@
 namespace Domain.Entities;
 
 
-public class Customer : BaseEntity
+public class Customer : TenantBaseEntity
 {
     public string? Name { get; set; }
     public string? Number { get; set; }
@@ -28,4 +28,5 @@ public class Customer : BaseEntity
     public string? CustomerCategoryId { get; set; }
     public CustomerCategory? CustomerCategory { get; set; }
     public ICollection<CustomerContact> CustomerContactList { get; set; } = new List<CustomerContact>();
+    public Company? Company { get; set; }
 }

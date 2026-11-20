@@ -3,7 +3,7 @@ using Domain.Enums;
 
 namespace Domain.Entities;
 
-public class PurchaseOrder : BaseEntity
+public class PurchaseOrder : TenantBaseEntity
 {
     public string? Number { get; set; }
     public DateTime? OrderDate { get; set; }
@@ -17,4 +17,5 @@ public class PurchaseOrder : BaseEntity
     public double? TaxAmount { get; set; }
     public double? AfterTaxAmount { get; set; }
     public ICollection<PurchaseOrderItem> PurchaseOrderItemList { get; set; } = new List<PurchaseOrderItem>();
+    public Company? Company { get; set; }
 }

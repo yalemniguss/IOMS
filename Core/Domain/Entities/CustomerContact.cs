@@ -2,7 +2,7 @@
 
 namespace Domain.Entities;
 
-public class CustomerContact : BaseEntity
+public class CustomerContact : TenantBaseEntity
 {
     public string? Name { get; set; }
     public string? Number { get; set; }
@@ -12,4 +12,6 @@ public class CustomerContact : BaseEntity
     public string? Description { get; set; }
     public string? CustomerId { get; set; }
     public Customer? Customer { get; set; }
+
+    public Company? Company { get; set; }
 }

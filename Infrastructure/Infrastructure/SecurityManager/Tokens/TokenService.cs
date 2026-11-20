@@ -41,6 +41,7 @@ public class TokenService : ITokenService
             new Claim("FirstName", user.FirstName ?? ""),
             new Claim("LastName", user.LastName ?? ""),
             new Claim("CompanyName", user.LastName ?? ""),
+            new Claim("CompanyId", user.CompanyId ?? ""),
         };
 
         if (userClaims != null)

@@ -1,9 +1,12 @@
 ﻿using Application.Common.Repositories;
+using Domain.Common;
 using Domain.Entities;
+using Infrastructure.DataAccessManager.EFCore.Common;
 using Infrastructure.DataAccessManager.EFCore.Configurations;
 using Infrastructure.SecurityManager.AspNetIdentity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace Infrastructure.DataAccessManager.EFCore.Contexts;
 
@@ -94,6 +97,20 @@ public class DataContext : IdentityDbContext<ApplicationUser>, IEntityDbSet
         modelBuilder.ApplyConfiguration(new NegativeAdjustmentConfiguration());
         modelBuilder.ApplyConfiguration(new PositiveAdjustmentConfiguration());
         modelBuilder.ApplyConfiguration(new ScrappingConfiguration());
+
+        //>>> Global query filter for multi-tenancy (CompanyId)
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(ITenantEntity).IsAssignableFrom(entityType.ClrType))
+            {
+                var parameter = Expression.Parameter(entityType.ClrType, "e");
+                var property = Expression.Property(parameter, nameof(ITenantEntity.CompanyId));
+                var tenantIdProperty = Expression.Property(null, typeof(TenantContext), nameof(TenantContext.CurrentTenantId));
+                var equality = Expression.Equal(property, tenantIdProperty);
+                var lambda = Expression.Lambda(equality, parameter);
+                entityType.SetQueryFilter(lambda);
+            }
+        }
 
     }
 

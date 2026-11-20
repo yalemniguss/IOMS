@@ -1,4 +1,5 @@
 ﻿using Application;
+using Application.Features.CompanyManager;
 using ASPNET.BackEnd.Common.Handlers;
 using Infrastructure;
 using Infrastructure.DataAccessManager.EFCore;
@@ -17,6 +18,9 @@ public static class BackEndConfiguration
 
         //>>> Infrastructure Layer
         services.AddInfrastructureServices(configuration);
+
+        //>>> Tenant Management Service
+        services.AddScoped<CompanyManagementService>();
 
         services.AddExceptionHandler<CustomExceptionHandler>();
 

@@ -11,6 +11,13 @@ public class VendorContactConfiguration : BaseEntityConfiguration<VendorContact>
     {
         base.Configure(builder);
 
+        builder.Property(x => x.CompanyId).IsRequired();
+        builder.HasIndex(x => x.CompanyId);
+        builder.HasOne(x => x.Company)
+               .WithMany()
+               .HasForeignKey(x => x.CompanyId)
+               .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.Restrict);
+
         builder.Property(x => x.Name).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.Number).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.JobTitle).HasMaxLength(NameConsts.MaxLength).IsRequired(false);

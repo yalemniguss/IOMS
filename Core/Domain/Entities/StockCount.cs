@@ -3,7 +3,7 @@ using Domain.Enums;
 
 namespace Domain.Entities;
 
-public class StockCount : BaseEntity
+public class StockCount : TenantBaseEntity
 {
     public string? Number { get; set; }
     public DateTime? CountDate { get; set; }
@@ -11,4 +11,6 @@ public class StockCount : BaseEntity
     public string? Description { get; set; }
     public string? WarehouseId { get; set; }
     public Warehouse? Warehouse { get; set; }
+
+    public Company? Company { get; set; }
 }

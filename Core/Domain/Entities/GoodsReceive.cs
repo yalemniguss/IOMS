@@ -3,7 +3,7 @@ using Domain.Enums;
 
 namespace Domain.Entities;
 
-public class GoodsReceive : BaseEntity
+public class GoodsReceive : TenantBaseEntity
 {
     public string? Number { get; set; }
     public DateTime? ReceiveDate { get; set; }
@@ -11,4 +11,6 @@ public class GoodsReceive : BaseEntity
     public string? Description { get; set; }
     public string? PurchaseOrderId { get; set; }
     public PurchaseOrder? PurchaseOrder { get; set; }
+
+    public Company? Company { get; set; }
 }

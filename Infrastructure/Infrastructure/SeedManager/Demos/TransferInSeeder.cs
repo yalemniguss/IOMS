@@ -3,6 +3,7 @@ using Application.Features.InventoryTransactionManager;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
 using Domain.Enums;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -15,6 +16,7 @@ public class TransferInSeeder
     private readonly NumberSequenceService _numberSequenceService;
     private readonly InventoryTransactionService _inventoryTransactionService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public TransferInSeeder(
         ICommandRepository<TransferIn> transferInRepository,
@@ -22,7 +24,8 @@ public class TransferInSeeder
         ICommandRepository<InventoryTransaction> inventoryTransactionRepository,
         NumberSequenceService numberSequenceService,
         InventoryTransactionService inventoryTransactionService,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
     )
     {
         _transferInRepository = transferInRepository;
@@ -31,10 +34,14 @@ public class TransferInSeeder
         _numberSequenceService = numberSequenceService;
         _inventoryTransactionService = inventoryTransactionService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var random = new Random();
         var transferStatusLength = Enum.GetNames(typeof(TransferStatus)).Length;
 
@@ -57,6 +64,7 @@ public class TransferInSeeder
                 TransferReceiveDate = transferOut.TransferReleaseDate?.AddDays(random.Next(1, 5)),
                 Status = (TransferStatus)random.Next(0, transferStatusLength),
                 TransferOutId = transferOut.Id,
+                CompanyId = companyId
             };
             await _transferInRepository.CreateAsync(transferIn);
 
@@ -78,7 +86,8 @@ public class TransferInSeeder
                     Number = _numberSequenceService.GenerateNumber(nameof(InventoryTransaction), "", "IVT"),
                     WarehouseId = transferOut.WarehouseToId,
                     ProductId = item.ProductId,
-                    Movement = item.Movement
+                    Movement = item.Movement,
+                    CompanyId = companyId
                 };
 
                 _inventoryTransactionService.CalculateInvenTrans(inventoryTransaction);

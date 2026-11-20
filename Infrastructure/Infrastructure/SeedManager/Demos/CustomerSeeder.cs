@@ -1,6 +1,7 @@
 ﻿using Application.Common.Repositories;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -12,24 +13,30 @@ public class CustomerSeeder
     private readonly ICommandRepository<CustomerCategory> _categoryRepository;
     private readonly NumberSequenceService _numberSequenceService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public CustomerSeeder(
         ICommandRepository<Customer> customerRepository,
         ICommandRepository<CustomerGroup> groupRepository,
         ICommandRepository<CustomerCategory> categoryRepository,
         NumberSequenceService numberSequenceService,
-        IUnitOfWork unitOfWork
-    )
+        IUnitOfWork unitOfWork,
+        DataContext context
+        )
     {
         _customerRepository = customerRepository;
         _groupRepository = groupRepository;
         _categoryRepository = categoryRepository;
         _numberSequenceService = numberSequenceService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var groups = (await _groupRepository.GetQuery().ToListAsync()).Select(x => x.Id).ToArray();
         var categories = (await _categoryRepository.GetQuery().ToListAsync()).Select(x => x.Id).ToArray();
         var cities = new string[] { "New York", "Los Angeles", "San Francisco", "Chicago" };
@@ -76,6 +83,7 @@ public class CustomerSeeder
             customer.ZipCode = GetRandomString(zipCodes, random);
             customer.PhoneNumber = GetRandomString(phoneNumbers, random);
             customer.EmailAddress = $"{customer.Name?.Split(' ')[0].ToLower()}@{GetRandomString(emailDomains, random)}";
+            customer.CompanyId = companyId;
 
             await _customerRepository.CreateAsync(customer);
         }
@@ -83,13 +91,15 @@ public class CustomerSeeder
         await _unitOfWork.SaveAsync();
     }
 
-    private static T GetRandomValue<T>(T[] array, Random random)
+    private static T? GetRandomValue<T>(T[]? array, Random random)
     {
+        if (array == null || array.Length == 0) return default;
         return array[random.Next(array.Length)];
     }
 
-    private static string GetRandomString(string[] array, Random random)
+    private static string? GetRandomString(string[]? array, Random random)
     {
+        if (array == null || array.Length == 0) return null;
         return array[random.Next(array.Length)];
     }
 }

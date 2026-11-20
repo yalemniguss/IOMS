@@ -1,6 +1,8 @@
-﻿using Infrastructure.SecurityManager.AspNetIdentity;
+﻿using Infrastructure.DataAccessManager.EFCore.Contexts;
+using Infrastructure.SecurityManager.AspNetIdentity;
 using Infrastructure.SecurityManager.Roles;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,18 +15,21 @@ public class UserAdminSeeder
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<UserAdminSeeder> _logger;
     private readonly bool _isDemoVersion;
+    private readonly DataContext _context;
 
     public UserAdminSeeder(
         IOptions<IdentitySettings> identitySettings,
         UserManager<ApplicationUser> userManager,
         IConfiguration configuration,
-        ILogger<UserAdminSeeder> logger
+        ILogger<UserAdminSeeder> logger,
+        DataContext context
         )
     {
         _identitySettings = identitySettings.Value;
         _userManager = userManager;
         _logger = logger;
         _isDemoVersion = configuration.GetValue<bool>("IsDemoVersion");
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
@@ -61,10 +66,15 @@ public class UserAdminSeeder
         // seeded its administrator before this setting existed keeps starting without it.
         var adminPassword = DefaultAdminCredentialPolicy.Validate(adminEmail, configuredPassword, _isDemoVersion);
 
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var applicationUser = new ApplicationUser(
             adminEmail,
             "Root",
-            "Admin"
+            "Admin",
+            companyName: defaultCompany?.Name ?? "Root Admin",
+            companyId: companyId
             );
 
         applicationUser.EmailConfirmed = true;

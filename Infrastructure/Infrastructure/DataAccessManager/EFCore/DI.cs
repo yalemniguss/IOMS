@@ -1,6 +1,8 @@
 ﻿using Application.Common.CQS.Commands;
 using Application.Common.CQS.Queries;
 using Application.Common.Repositories;
+using Application.Common.Services;
+using Infrastructure.DataAccessManager.EFCore.Common;
 using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Infrastructure.DataAccessManager.EFCore.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -44,11 +46,13 @@ public static class DI
 
             case "SqlServer":
             default:
-                services.AddDbContext<DataContext>(options =>
+                services.AddDbContext<DataContext>((sp, options) =>
+                {
                     options.UseSqlServer(connectionString)
-                    .LogTo(Log.Information, LogLevel.Information)
-                    .EnableSensitiveDataLogging()
-                );
+                        .LogTo(Log.Information, LogLevel.Information)
+                        .EnableSensitiveDataLogging()
+                        .AddInterceptors(sp.GetRequiredService<TenantInterceptor>());
+                });
                 services.AddDbContext<CommandContext>(options =>
                     options.UseSqlServer(connectionString)
                     .LogTo(Log.Information, LogLevel.Information)
@@ -67,6 +71,8 @@ public static class DI
         services.AddScoped<IQueryContext, QueryContext>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(ICommandRepository<>), typeof(CommandRepository<>));
+        services.AddScoped<TenantInterceptor>();
+        services.AddScoped<ICurrentTenantService, CurrentTenantService>();
 
 
         return services;

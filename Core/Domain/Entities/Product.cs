@@ -2,7 +2,7 @@
 
 namespace Domain.Entities;
 
-public class Product : BaseEntity
+public class Product : TenantBaseEntity
 {
     public string? Name { get; set; }
     public string? Number { get; set; }
@@ -13,4 +13,5 @@ public class Product : BaseEntity
     public UnitMeasure? UnitMeasure { get; set; }
     public string? ProductGroupId { get; set; }
     public ProductGroup? ProductGroup { get; set; }
+    public Company? Company { get; set; }
 }

@@ -11,6 +11,13 @@ public class NegativeAdjustmentConfiguration : BaseEntityConfiguration<NegativeA
     {
         base.Configure(builder);
 
+        builder.Property(c => c.CompanyId).IsRequired();
+        builder.HasIndex(c => c.CompanyId);
+        builder.HasOne(c => c.Company)
+               .WithMany()
+               .HasForeignKey(c => c.CompanyId)
+               .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.Restrict);
+
         builder.Property(c => c.Number).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
         builder.Property(c => c.AdjustmentDate).IsRequired(false);
         builder.Property(c => c.Status).IsRequired(false);

@@ -3,6 +3,7 @@ using Application.Features.InventoryTransactionManager;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
 using Domain.Enums;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -16,6 +17,7 @@ public class ScrappingSeeder
     private readonly NumberSequenceService _numberSequenceService;
     private readonly InventoryTransactionService _inventoryTransactionService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public ScrappingSeeder(
         ICommandRepository<Scrapping> scrappingRepository,
@@ -24,7 +26,8 @@ public class ScrappingSeeder
         ICommandRepository<Warehouse> warehouseRepository,
         NumberSequenceService numberSequenceService,
         InventoryTransactionService inventoryTransactionService,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
     )
     {
         _scrappingRepository = scrappingRepository;
@@ -34,10 +37,14 @@ public class ScrappingSeeder
         _numberSequenceService = numberSequenceService;
         _inventoryTransactionService = inventoryTransactionService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var random = new Random();
         var scrappingStatusLength = Enum.GetNames(typeof(ScrappingStatus)).Length;
 
@@ -67,6 +74,7 @@ public class ScrappingSeeder
                     ScrappingDate = transDate,
                     Status = (ScrappingStatus)random.Next(0, scrappingStatusLength),
                     WarehouseId = GetRandomValue(warehouses, random),
+                    CompanyId = companyId
                 };
                 await _scrappingRepository.CreateAsync(scrapping);
 
@@ -86,7 +94,8 @@ public class ScrappingSeeder
                         Number = _numberSequenceService.GenerateNumber(nameof(InventoryTransaction), "", "IVT"),
                         WarehouseId = scrapping.WarehouseId,
                         ProductId = product.Id,
-                        Movement = random.Next(1, 10)
+                        Movement = random.Next(1, 10),
+                        CompanyId = companyId
                     };
 
                     _inventoryTransactionService.CalculateInvenTrans(inventoryTransaction);
@@ -107,8 +116,9 @@ public class ScrappingSeeder
             .ToArray();
     }
 
-    private static T GetRandomValue<T>(IList<T> list, Random random)
+    private static T? GetRandomValue<T>(IList<T>? list, Random random)
     {
+        if (list == null || list.Count == 0) return default;
         return list[random.Next(list.Count)];
     }
 }

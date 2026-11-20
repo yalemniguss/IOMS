@@ -52,6 +52,8 @@ app.UseRouting();
 app.UseCors();
 app.UseMiddleware<GlobalApiExceptionHandlerMiddleware>();
 app.UseAuthentication();
+app.UseMiddleware<TenantMiddleware>();
+app.UseMiddleware<TenantUrlResolutionMiddleware>();
 app.UseAuthorization();
 app.MapStaticAssets();
 

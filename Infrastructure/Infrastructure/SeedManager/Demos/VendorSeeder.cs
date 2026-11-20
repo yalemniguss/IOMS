@@ -1,6 +1,7 @@
 ﻿using Application.Common.Repositories;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -12,24 +13,30 @@ public class VendorSeeder
     private readonly ICommandRepository<VendorCategory> _categoryRepository;
     private readonly NumberSequenceService _numberSequenceService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public VendorSeeder(
         ICommandRepository<Vendor> vendorRepository,
         ICommandRepository<VendorGroup> groupRepository,
         ICommandRepository<VendorCategory> categoryRepository,
         NumberSequenceService numberSequenceService,
-        IUnitOfWork unitOfWork
-    )
+        IUnitOfWork unitOfWork,
+        DataContext context
+        )
     {
         _vendorRepository = vendorRepository;
         _groupRepository = groupRepository;
         _categoryRepository = categoryRepository;
         _numberSequenceService = numberSequenceService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var groups = (await _groupRepository.GetQuery().ToListAsync()).Select(x => x.Id).ToArray();
         var categories = (await _categoryRepository.GetQuery().ToListAsync()).Select(x => x.Id).ToArray();
         var cities = new string[] { "New York", "Los Angeles", "San Francisco", "Chicago" };
@@ -76,6 +83,7 @@ public class VendorSeeder
             vendor.ZipCode = GetRandomString(zipCodes, random);
             vendor.PhoneNumber = GetRandomString(phoneNumbers, random);
             vendor.EmailAddress = GetRandomString(emails, random);
+            vendor.CompanyId = companyId;
 
             await _vendorRepository.CreateAsync(vendor);
         }
@@ -83,13 +91,15 @@ public class VendorSeeder
         await _unitOfWork.SaveAsync();
     }
 
-    private static T GetRandomValue<T>(T[] array, Random random)
+    private static T? GetRandomValue<T>(T[]? array, Random random)
     {
+        if (array == null || array.Length == 0) return default;
         return array[random.Next(array.Length)];
     }
 
-    private static string GetRandomString(string[] array, Random random)
+    private static string? GetRandomString(string[]? array, Random random)
     {
+        if (array == null || array.Length == 0) return null;
         return array[random.Next(array.Length)];
     }
 }

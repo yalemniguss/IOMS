@@ -3,7 +3,7 @@ using Domain.Enums;
 
 namespace Domain.Entities;
 
-public class TransferOut : BaseEntity
+public class TransferOut : TenantBaseEntity
 {
     public string? Number { get; set; }
     public DateTime? TransferReleaseDate { get; set; }
@@ -13,4 +13,6 @@ public class TransferOut : BaseEntity
     public Warehouse? WarehouseFrom { get; set; }
     public string? WarehouseToId { get; set; }
     public Warehouse? WarehouseTo { get; set; }
+
+    public Company? Company { get; set; }
 }

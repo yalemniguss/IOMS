@@ -1,6 +1,7 @@
 ﻿using Application.Common.Repositories;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -11,22 +12,28 @@ public class CustomerContactSeeder
     private readonly ICommandRepository<Customer> _customerRepository;
     private readonly NumberSequenceService _numberSequenceService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public CustomerContactSeeder(
         ICommandRepository<CustomerContact> customerContactRepository,
         ICommandRepository<Customer> customerRepository,
         NumberSequenceService numberSequenceService,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
     )
     {
         _customerContactRepository = customerContactRepository;
         _customerRepository = customerRepository;
         _numberSequenceService = numberSequenceService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var firstNames = new string[]
         {
             "Adam", "Sarah", "Michael", "Emily", "David", "Jessica",
@@ -71,7 +78,8 @@ public class CustomerContactSeeder
                     CustomerId = customerId,
                     JobTitle = GetRandomString(jobTitles, random),
                     EmailAddress = $"{firstName.ToLower()}.{lastName.ToLower()}@gmail.com",
-                    PhoneNumber = GenerateRandomPhoneNumber(random)
+                    PhoneNumber = GenerateRandomPhoneNumber(random),
+                    CompanyId = companyId
                 });
             }
         }
@@ -84,8 +92,9 @@ public class CustomerContactSeeder
         await _unitOfWork.SaveAsync();
     }
 
-    private static string GetRandomString(string[] array, Random random)
+    private static string? GetRandomString(string[]? array, Random random)
     {
+        if (array == null || array.Length == 0) return null;
         return array[random.Next(array.Length)];
     }
 

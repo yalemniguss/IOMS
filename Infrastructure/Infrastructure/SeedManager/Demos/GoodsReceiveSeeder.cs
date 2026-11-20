@@ -3,6 +3,7 @@ using Application.Features.InventoryTransactionManager;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
 using Domain.Enums;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -17,6 +18,7 @@ public class GoodsReceiveSeeder
     private readonly NumberSequenceService _numberSequenceService;
     private readonly InventoryTransactionService _inventoryTransactionService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public GoodsReceiveSeeder(
         ICommandRepository<GoodsReceive> goodsReceiveRepository,
@@ -26,7 +28,8 @@ public class GoodsReceiveSeeder
         ICommandRepository<InventoryTransaction> inventoryTransactionRepository,
         NumberSequenceService numberSequenceService,
         InventoryTransactionService inventoryTransactionService,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
     )
     {
         _goodsReceiveRepository = goodsReceiveRepository;
@@ -37,10 +40,14 @@ public class GoodsReceiveSeeder
         _numberSequenceService = numberSequenceService;
         _inventoryTransactionService = inventoryTransactionService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var random = new Random();
         var goodsReceiveStatusLength = Enum.GetNames(typeof(GoodsReceiveStatus)).Length;
 
@@ -63,6 +70,7 @@ public class GoodsReceiveSeeder
                 ReceiveDate = purchaseOrder.OrderDate?.AddDays(random.Next(1, 5)),
                 Status = (GoodsReceiveStatus)random.Next(0, goodsReceiveStatusLength),
                 PurchaseOrderId = purchaseOrder.Id,
+                CompanyId = companyId
             };
             await _goodsReceiveRepository.CreateAsync(goodsReceive);
 
@@ -85,7 +93,8 @@ public class GoodsReceiveSeeder
                     Number = _numberSequenceService.GenerateNumber(nameof(InventoryTransaction), "", "IVT"),
                     WarehouseId = GetRandomValue(warehouses, random),
                     ProductId = item.ProductId,
-                    Movement = item.Quantity!.Value
+                    Movement = item.Quantity!.Value,
+                    CompanyId = companyId
                 };
 
                 _inventoryTransactionService.CalculateInvenTrans(inventoryTransaction);
@@ -97,8 +106,9 @@ public class GoodsReceiveSeeder
         }
     }
 
-    private static T GetRandomValue<T>(List<T> list, Random random)
+    private static T? GetRandomValue<T>(List<T>? list, Random random)
     {
+        if (list == null || list.Count == 0) return default;
         return list[random.Next(list.Count)];
     }
 }

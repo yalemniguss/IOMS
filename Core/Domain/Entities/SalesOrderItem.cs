@@ -2,7 +2,7 @@
 
 namespace Domain.Entities;
 
-public class SalesOrderItem : BaseEntity
+public class SalesOrderItem : TenantBaseEntity
 {
     public string? SalesOrderId { get; set; }
     public SalesOrder? SalesOrder { get; set; }
@@ -13,4 +13,5 @@ public class SalesOrderItem : BaseEntity
     public double? Quantity { get; set; } = 1;
     public double? Total { get; set; } = 0;
 
+    public Company? Company { get; set; }
 }

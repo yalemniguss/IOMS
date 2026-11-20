@@ -11,6 +11,13 @@ public class NumberSequenceConfiguration : BaseEntityConfiguration<NumberSequenc
     {
         base.Configure(builder);
 
+        builder.Property(x => x.CompanyId).IsRequired();
+        builder.HasIndex(x => x.CompanyId);
+        builder.HasOne(x => x.Company)
+               .WithMany()
+               .HasForeignKey(x => x.CompanyId)
+               .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.Restrict);
+
         builder.Property(x => x.EntityName).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.Prefix).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.Suffix).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);

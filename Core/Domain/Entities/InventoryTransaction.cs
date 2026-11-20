@@ -4,7 +4,7 @@ using Domain.Enums;
 namespace Domain.Entities;
 
 
-public class InventoryTransaction : BaseEntity
+public class InventoryTransaction : TenantBaseEntity
 {
     public string? ModuleId { get; set; }
     public string? ModuleName { get; set; }
@@ -28,4 +28,5 @@ public class InventoryTransaction : BaseEntity
     public double? QtySCCount { get; set; }
     public double? QtySCDelta { get; set; }
 
+    public Company? Company { get; set; }
 }

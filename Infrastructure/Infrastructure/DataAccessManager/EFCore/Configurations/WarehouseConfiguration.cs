@@ -11,6 +11,13 @@ public class WarehouseConfiguration : BaseEntityConfiguration<Warehouse>
     {
         base.Configure(builder);
 
+        builder.Property(x => x.CompanyId).IsRequired();
+        builder.HasIndex(x => x.CompanyId);
+        builder.HasOne(x => x.Company)
+               .WithMany()
+               .HasForeignKey(x => x.CompanyId)
+               .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.Restrict);
+
         builder.Property(x => x.Name).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.Description).HasMaxLength(DescriptionConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.SystemWarehouse).IsRequired(false);

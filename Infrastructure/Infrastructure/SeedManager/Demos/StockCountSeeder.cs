@@ -3,6 +3,7 @@ using Application.Features.InventoryTransactionManager;
 using Application.Features.NumberSequenceManager;
 using Domain.Entities;
 using Domain.Enums;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -16,6 +17,7 @@ public class StockCountSeeder
     private readonly NumberSequenceService _numberSequenceService;
     private readonly InventoryTransactionService _inventoryTransactionService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public StockCountSeeder(
         ICommandRepository<StockCount> stockCountRepository,
@@ -24,7 +26,8 @@ public class StockCountSeeder
         ICommandRepository<Warehouse> warehouseRepository,
         NumberSequenceService numberSequenceService,
         InventoryTransactionService inventoryTransactionService,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
     )
     {
         _stockCountRepository = stockCountRepository;
@@ -34,10 +37,14 @@ public class StockCountSeeder
         _numberSequenceService = numberSequenceService;
         _inventoryTransactionService = inventoryTransactionService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var random = new Random();
         var stockCountStatusLength = Enum.GetNames(typeof(StockCountStatus)).Length;
 
@@ -67,6 +74,7 @@ public class StockCountSeeder
                     CountDate = transDate,
                     Status = (StockCountStatus)random.Next(0, stockCountStatusLength),
                     WarehouseId = GetRandomValue(warehouses, random),
+                    CompanyId = companyId
                 };
                 await _stockCountRepository.CreateAsync(stockCount);
 
@@ -100,6 +108,7 @@ public class StockCountSeeder
                         WarehouseId = stockCount.WarehouseId,
                         ProductId = product.Id,
                         QtySCCount = qtyCount,
+                        CompanyId = companyId
                     };
 
                     _inventoryTransactionService.CalculateInvenTrans(inventoryTransaction);
@@ -120,8 +129,9 @@ public class StockCountSeeder
             .ToArray();
     }
 
-    private static T GetRandomValue<T>(IList<T> list, Random random)
+    private static T? GetRandomValue<T>(IList<T>? list, Random random)
     {
+        if (list == null || list.Count == 0) return default;
         return list[random.Next(list.Count)];
     }
 }

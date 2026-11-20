@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Infrastructure.SecurityManager.AspNetIdentity;
 
@@ -8,6 +9,8 @@ public class ApplicationUser : IdentityUser
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? CompanyName { get; set; }
+    public string? CompanyId { get; set; }
+    public Company? Company { get; set; }
     public string? ProfilePictureName { get; set; }
     public bool? IsBlocked { get; set; }
     public bool? IsDeleted { get; set; }
@@ -22,6 +25,7 @@ public class ApplicationUser : IdentityUser
         string firstName,
         string lastName,
         string companyName = "",
+        string companyId = "",
         string createdById = ""
         )
     {
@@ -29,12 +33,13 @@ public class ApplicationUser : IdentityUser
         IsBlocked = false;
         IsDeleted = false;
         CreatedAt = DateTime.UtcNow;
-        Email = email.Trim();
+        Email = email?.Trim();
         UserName = Email;
-        FirstName = firstName.Trim();
-        LastName = lastName.Trim();
-        CompanyName = companyName.Trim();
-        CreatedById = createdById.Trim();
+        FirstName = firstName?.Trim();
+        LastName = lastName?.Trim();
+        CompanyName = companyName?.Trim();
+        CompanyId = companyId?.Trim();
+        CreatedById = createdById?.Trim();
     }
 
 }

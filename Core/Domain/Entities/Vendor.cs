@@ -3,7 +3,7 @@
 namespace Domain.Entities;
 
 
-public class Vendor : BaseEntity
+public class Vendor : TenantBaseEntity
 {
     public string? Name { get; set; }
     public string? Number { get; set; }
@@ -28,4 +28,5 @@ public class Vendor : BaseEntity
     public string? VendorCategoryId { get; set; }
     public VendorCategory? VendorCategory { get; set; }
     public ICollection<VendorContact> VendorContactList { get; set; } = new List<VendorContact>();
+    public Company? Company { get; set; }
 }

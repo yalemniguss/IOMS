@@ -3,6 +3,7 @@ using Application.Features.NumberSequenceManager;
 using Application.Features.SalesOrderManager;
 using Domain.Entities;
 using Domain.Enums;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -17,6 +18,7 @@ public class SalesOrderSeeder
     private readonly ICommandRepository<Product> _productRepository;
     private readonly NumberSequenceService _numberSequenceService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public SalesOrderSeeder(
         SalesOrderService salesOrderService,
@@ -26,7 +28,8 @@ public class SalesOrderSeeder
         ICommandRepository<Tax> taxRepository,
         ICommandRepository<Product> productRepository,
         NumberSequenceService numberSequenceService,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
     )
     {
         _salesOrderService = salesOrderService;
@@ -37,10 +40,14 @@ public class SalesOrderSeeder
         _productRepository = productRepository;
         _numberSequenceService = numberSequenceService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var random = new Random();
         var customers = await _customerRepository.GetQuery().Select(x => x.Id).ToListAsync();
         var taxes = await _taxRepository.GetQuery().Select(x => x.Id).ToListAsync();
@@ -62,6 +69,7 @@ public class SalesOrderSeeder
                     OrderStatus = (SalesOrderStatus)random.Next(0, Enum.GetNames(typeof(SalesOrderStatus)).Length),
                     CustomerId = GetRandomValue(customers, random),
                     TaxId = GetRandomValue(taxes, random),
+                    CompanyId = companyId
                 };
                 await _salesOrderRepository.CreateAsync(salesOrder);
 
@@ -77,7 +85,8 @@ public class SalesOrderSeeder
                         Summary = product.Number,
                         UnitPrice = product.UnitPrice,
                         Quantity = qty,
-                        Total = product.UnitPrice * qty
+                        Total = product.UnitPrice * qty,
+                        CompanyId = companyId
                     };
                     await _salesOrderItemRepository.CreateAsync(salesOrderItem);
                 }
@@ -90,8 +99,9 @@ public class SalesOrderSeeder
 
     }
 
-    private static T GetRandomValue<T>(List<T> list, Random random)
+    private static T? GetRandomValue<T>(List<T>? list, Random random)
     {
+        if (list == null || list.Count == 0) return default;
         return list[random.Next(list.Count)];
     }
 

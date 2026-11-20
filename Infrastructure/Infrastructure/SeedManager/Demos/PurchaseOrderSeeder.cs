@@ -3,6 +3,7 @@ using Application.Features.NumberSequenceManager;
 using Application.Features.PurchaseOrderManager;
 using Domain.Entities;
 using Domain.Enums;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.SeedManager.Demos;
@@ -17,6 +18,7 @@ public class PurchaseOrderSeeder
     private readonly ICommandRepository<Product> _productRepository;
     private readonly NumberSequenceService _numberSequenceService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly DataContext _context;
 
     public PurchaseOrderSeeder(
         PurchaseOrderService purchaseOrderService,
@@ -26,7 +28,8 @@ public class PurchaseOrderSeeder
         ICommandRepository<Tax> taxRepository,
         ICommandRepository<Product> productRepository,
         NumberSequenceService numberSequenceService,
-        IUnitOfWork unitOfWork
+        IUnitOfWork unitOfWork,
+        DataContext context
     )
     {
         _purchaseOrderService = purchaseOrderService;
@@ -37,10 +40,14 @@ public class PurchaseOrderSeeder
         _productRepository = productRepository;
         _numberSequenceService = numberSequenceService;
         _unitOfWork = unitOfWork;
+        _context = context;
     }
 
     public async Task GenerateDataAsync()
     {
+        var defaultCompany = await _context.Company.FirstOrDefaultAsync();
+        var companyId = defaultCompany?.Id ?? "";
+
         var random = new Random();
         var vendors = await _vendorRepository.GetQuery().Select(x => x.Id).ToListAsync();
         var taxes = await _taxRepository.GetQuery().Select(x => x.Id).ToListAsync();
@@ -62,6 +69,7 @@ public class PurchaseOrderSeeder
                     OrderStatus = (PurchaseOrderStatus)random.Next(0, Enum.GetNames(typeof(PurchaseOrderStatus)).Length),
                     VendorId = GetRandomValue(vendors, random),
                     TaxId = GetRandomValue(taxes, random),
+                    CompanyId = companyId
                 };
                 await _purchaseOrderRepository.CreateAsync(purchaseOrder);
 
@@ -77,7 +85,8 @@ public class PurchaseOrderSeeder
                         Summary = product.Number,
                         UnitPrice = product.UnitPrice,
                         Quantity = quantity,
-                        Total = product.UnitPrice * quantity
+                        Total = product.UnitPrice * quantity,
+                        CompanyId = companyId
                     };
                     await _purchaseOrderItemRepository.CreateAsync(purchaseOrderItem);
                 }
@@ -89,8 +98,9 @@ public class PurchaseOrderSeeder
         }
     }
 
-    private static T GetRandomValue<T>(List<T> list, Random random)
+    private static T? GetRandomValue<T>(List<T>? list, Random random)
     {
+        if (list == null || list.Count == 0) return default;
         return list[random.Next(list.Count)];
     }
 

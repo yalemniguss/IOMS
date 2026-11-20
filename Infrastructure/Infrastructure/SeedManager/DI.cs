@@ -1,4 +1,5 @@
-﻿using Infrastructure.DataAccessManager.EFCore.Contexts;
+﻿using Infrastructure.DataAccessManager.EFCore.Common;
+using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Infrastructure.SeedManager.Demos;
 using Infrastructure.SeedManager.Systems;
 using Microsoft.Extensions.Configuration;
@@ -36,6 +37,13 @@ public static class DI
             var companySeeder = serviceProvider.GetRequiredService<CompanySeeder>();
             companySeeder.GenerateDataAsync().Wait();
 
+            //>>> Set tenant context for global query filters during system seeding
+            var defaultCompany = context.Company.FirstOrDefault();
+            if (defaultCompany != null)
+            {
+                TenantContext.CurrentTenantId = defaultCompany.Id;
+            }
+
             var systemWarehouseSeeder = serviceProvider.GetRequiredService<SystemWarehouseSeeder>();
             systemWarehouseSeeder.GenerateDataAsync().Wait();
 
@@ -44,6 +52,14 @@ public static class DI
         //>>> The administrator account is verified on every start up, so an installation that still uses
         //>>> the password of an earlier release rotates it instead of keeping a publicly known credential.
         //>>> GetAwaiter().GetResult() rethrows the original exception, .Wait() would wrap it in an AggregateException.
+
+        //>>> Set tenant context for global query filters during user seeding
+        var userDefaultCompany = context.Company.FirstOrDefault();
+        if (userDefaultCompany != null)
+        {
+            TenantContext.CurrentTenantId = userDefaultCompany.Id;
+        }
+
         var userAdminSeeder = serviceProvider.GetRequiredService<UserAdminSeeder>();
         userAdminSeeder.GenerateDataAsync().GetAwaiter().GetResult();
 
@@ -92,6 +108,13 @@ public static class DI
         var context = serviceProvider.GetRequiredService<DataContext>();
         if (!context.Tax.Any()) //if empty, thats mean never been seeded before
         {
+            //>>> Set tenant context for global query filters during seeding
+            var defaultCompany = context.Company.FirstOrDefault();
+            if (defaultCompany != null)
+            {
+                TenantContext.CurrentTenantId = defaultCompany.Id;
+            }
+
             var taxSeeder = serviceProvider.GetRequiredService<TaxSeeder>();
             taxSeeder.GenerateDataAsync().Wait();
 
